@@ -139,3 +139,14 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res
         token: accessToken
     })
 })
+
+
+
+
+
+/**
+ * @desc     refresh access token
+ * @route   /api/auth/refresh-token
+ * @method  POST
+ * @access  public
+ */
