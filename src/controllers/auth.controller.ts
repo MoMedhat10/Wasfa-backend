@@ -6,6 +6,8 @@ import VerificationToken from "../models/verificationToken"
 import crypto from "crypto"
 import { sendEmail } from "../utils/sendEmail";
 import { generateAccessToken, generateRefreshToken } from "@utils/generateTokens";
+import jwt from "jsonwebtoken";
+import { UserType } from "@utils/generateTokens";
 
 interface UserBody {
     username: string;
@@ -148,5 +150,25 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res
  * @desc     refresh access token
  * @route   /api/auth/refresh-token
  * @method  POST
- * @access  public
+ * @access  private
  */
+export const refreshToken = asyncHandler(async (req: Request, res: Response) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if(!refreshToken)
+    {
+        res.status(401).json({message: "No refresh token provided!"});
+    }
+
+    try{
+        const decodedPayLoad = jwt.verify(refreshToken , process.env.TOKENS_SECRET_KEY!) as UserType;
+        const newAccessToken = generateAccessToken(decodedPayLoad);
+        res.status(200).json({
+            message: "Token refreshed successfully",
+            token: newAccessToken 
+        })
+    }
+    catch {
+        res.status(403).json({message: "Invalid refresh token"})
+    }
+})

@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
-import { User } from "@utils/generateTokens"
+import { UserType } from "@utils/generateTokens"
 
 export interface AuthenticatedRequest extends Request {
-    user?: User
+    user?: UserType
 }
 
 
@@ -18,7 +18,7 @@ export const protectedRoute = (req: AuthenticatedRequest , res: Response , next:
     const token = accessToken.split(" ")[1];
 
     try{
-        const decodedPayLoad = jwt.verify(token! , process.env.TOKENS_SECRET_KEY!) as User ;
+        const decodedPayLoad = jwt.verify(token! , process.env.TOKENS_SECRET_KEY!) as UserType ;
         req.user = decodedPayLoad;
         return next();
     }
