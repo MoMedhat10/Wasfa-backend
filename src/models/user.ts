@@ -39,7 +39,7 @@ const User = model<IUser>("User", new Schema<IUser>({
 }, { timestamps: true }));
 
 
- const userRegistrationSchema = z.object({
+const userRegistrationSchema = z.object({
     username: z.string()
         .min(2, "Username must be at least 2 characters long")
         .max(20, "Username cannot exceed 20 characters")
@@ -58,6 +58,15 @@ const User = model<IUser>("User", new Schema<IUser>({
         .trim()
 });
 
+
+const userLoginSchema = z.object({
+    email: z.string().email("Invalid email address").trim(),
+    password: z.string().min(8, "Password must be at least 8 characters long").trim(),
+}) 
+
+export const validateLoginUser = (data: unknown) => {
+    return userLoginSchema.safeParse(data);
+}
 
 export const validateRegisterUser = (data: unknown) => {
     return userRegistrationSchema.safeParse(data)

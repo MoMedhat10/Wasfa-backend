@@ -1,10 +1,11 @@
 import { Request, Response } from "express"
 import asyncHandler from "express-async-handler";
-import User, { validateRegisterUser } from "../models/user"
+import User, { validateRegisterUser , validateLoginUser } from "../models/user"
 import bcrypt from "bcryptjs"
 import VerificationToken from "../models/verificationToken"
 import crypto from "crypto"
 import { sendEmail } from "../utils/sendEmail";
+import { generateAccessToken, generateRefreshToken } from "@utils/generateTokens";
 
 interface UserBody {
     username: string;
@@ -75,4 +76,66 @@ export const registerUser = asyncHandler(async (req: Request<{}, {}, UserBody>, 
 
 
     res.status(201).json({ message: "User registered successfully" })
+})
+
+
+
+
+
+/**
+ * @desc     Login user
+ * @route   /api/auth/login
+ * @method  POST
+ * @access  public
+ */
+export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res: Response) => {
+    const { email , password } = req.body;
+    //validation
+    const result = validateLoginUser(req.body);
+    if (!result.success) {
+        const formattedErrors = result.error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
+        }));
+
+        res.status(400).json({
+            message: "Validation failed",
+            errors: formattedErrors
+        });
+        return;
+    }
+
+    // check if the user is already registered
+    let user = await User.findOne({ email });
+    if (!user) {
+        res.status(400).json({ message: "invalid email or password." });
+        return
+    }
+
+    if(!user.isVerified)
+    {
+        res.status(400).json({message: "please verify your account to login."});
+        return 
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+        res.status(400).json({ message: "Invalid email or password." });
+        return
+    }
+
+    const accessToken = generateAccessToken({ _id: user._id.toString(), isAdmin: user.isAdmin });
+    const refreshToken = generateRefreshToken({ _id: user._id.toString(), isAdmin: user.isAdmin });
+
+    res.cookie("refreshToken" , refreshToken , {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+        maxAge: 7 * 24 * 60 * 60 * 1000
+    })
+
+    res.status(200).json({
+        message: `Welcome back ${user.username}!`,
+        token: accessToken
+    })
 })
