@@ -158,6 +158,7 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
     if(!refreshToken)
     {
         res.status(401).json({message: "No refresh token provided!"});
+        return 
     }
 
     try{
@@ -171,4 +172,30 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
     catch {
         res.status(403).json({message: "Invalid refresh token"})
     }
+})
+
+
+/**
+ * @desc     logout
+ * @route   /api/auth/logout
+ * @method  POST
+ * @access  private
+ */
+export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
+    const refreshToken = req.cookies.refreshToken;
+
+    if(!refreshToken)
+    {
+        res.status(401).json({message: "No refresh token provided!"});
+        return
+    }
+
+    res.clearCookie("refreshToken", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "strict",
+    });
+
+    res.status(200).json({ message: "Logged out successfully" });
+
 })
