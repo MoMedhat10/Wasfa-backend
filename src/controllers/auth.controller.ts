@@ -8,11 +8,13 @@ import { sendEmail } from "../utils/sendEmail";
 import { generateAccessToken, generateRefreshToken } from "@utils/generateTokens";
 import jwt from "jsonwebtoken";
 import { UserType } from "@utils/generateTokens";
+import { generateVerificationEmailTemplate } from "@utils/templates";
 
 interface UserBody {
-    username: string;
-    email: string;
-    password: string;
+    username?: string;
+    email?: string;
+    password?: string;
+    rememberMe?: boolean;
 }
 
 /**
@@ -46,7 +48,7 @@ export const registerUser = asyncHandler(async (req: Request<{}, {}, UserBody>, 
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+    const hashedPassword = await bcrypt.hash(password!, salt);
 
 
     const newUser = new User({
@@ -61,16 +63,11 @@ export const registerUser = asyncHandler(async (req: Request<{}, {}, UserBody>, 
         token: crypto.randomBytes(32).toString("hex")
     })
 
-    // create link
-    const link = `${process.env.CLIENT_DOMAIN}/users/${newUser._id}/verify/${verificationToken.token}`;
-    const template = `
-     <div>
-            <p> Click on the link below to verify your email </p>
-            <a href="${link}"> Verify</a>
-        </div>
-    `
+   
+    const template = generateVerificationEmailTemplate({ username: newUser.username!, id: newUser._id.toString() }, verificationToken.token);
+
     await sendEmail({
-        userEmail: email,
+        userEmail: email!,
         subject: "Verify your email",
         htmlContent: template,
         senderName: "Wasfa"
@@ -91,7 +88,7 @@ export const registerUser = asyncHandler(async (req: Request<{}, {}, UserBody>, 
  * @access  public
  */
 export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res: Response) => {
-    const { email , password } = req.body;
+    const { email , password  } = req.body;
     //validation
     const result = validateLoginUser(req.body);
     if (!result.success) {
@@ -120,7 +117,7 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res
         return 
     }
 
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await bcrypt.compare(password!, user.password);
     if (!isPasswordValid) {
         res.status(400).json({ message: "Invalid email or password." });
         return
@@ -198,4 +195,39 @@ export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
 
     res.status(200).json({ message: "Logged out successfully" });
 
+})
+
+
+
+/**
+ * @desc     verify user
+ * @route   /api/auth/users/:userId/verify/:token
+ * @method  GET
+ * @access  public
+ */
+export const verifyUser = asyncHandler(async (req: Request<{userId: string , token: string}>, res: Response) => {
+    const { userId , token } = req.params;
+    const user = await User.findById(userId);
+    if(!user)
+    {
+        res.status(404).json({message: "User not found!"});
+        console.log("User not found!");
+        return
+    }
+
+    const verificationToken = await VerificationToken.findOne({
+        userId: user._id,
+        token
+    });
+
+    if(!verificationToken)
+    {
+        res.status(400).json({message: "Invalid link!"});
+        console.log("Invalid link!");
+        return
+    }
+    user.isVerified = true;
+    await user.save();
+    await verificationToken.deleteOne();
+    res.status(200).json({message: "User verified successfully!"});
 })
