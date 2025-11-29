@@ -5,6 +5,7 @@ import { errorHandler, notFound } from "./middlewares/error";
 import authRoute from "@routes/auth.route"
 import cookieParser from "cookie-parser"
 import cors from "cors"
+import { logger } from "@middlewares/logger"
 
 dotenv.config();
 
@@ -22,7 +23,7 @@ app.use(cors({
 app.use(express.json());
 app.use(cookieParser());
 
-
+app.use(logger);
 app.use("/api/auth" , authRoute)
 
 

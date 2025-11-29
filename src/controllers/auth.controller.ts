@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
 import asyncHandler from "express-async-handler";
-import User, { validateRegisterUser , validateLoginUser } from "../models/user"
+import User, { validateRegisterUser, validateLoginUser } from "../models/user"
 import bcrypt from "bcryptjs"
 import VerificationToken from "../models/verificationToken"
 import crypto from "crypto"
@@ -15,6 +15,11 @@ interface UserBody {
     email?: string;
     password?: string;
     rememberMe?: boolean;
+}
+
+
+interface ResendEmailParams {
+    userId: string;
 }
 
 /**
@@ -63,7 +68,7 @@ export const registerUser = asyncHandler(async (req: Request<{}, {}, UserBody>, 
         token: crypto.randomBytes(32).toString("hex")
     })
 
-   
+
     const template = generateVerificationEmailTemplate({ username: newUser.username!, id: newUser._id.toString() }, verificationToken.token);
 
     await sendEmail({
@@ -88,7 +93,7 @@ export const registerUser = asyncHandler(async (req: Request<{}, {}, UserBody>, 
  * @access  public
  */
 export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res: Response) => {
-    const { email , password  } = req.body;
+    const { email, password } = req.body;
     //validation
     const result = validateLoginUser(req.body);
     if (!result.success) {
@@ -111,10 +116,9 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res
         return
     }
 
-    if(!user.isVerified)
-    {
-        res.status(400).json({message: "please verify your account to login."});
-        return 
+    if (!user.isVerified) {
+        res.status(400).json({ message: "please verify your account to login." });
+        return
     }
 
     const isPasswordValid = await bcrypt.compare(password!, user.password);
@@ -126,7 +130,7 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res
     const accessToken = generateAccessToken({ _id: user._id.toString(), isAdmin: user.isAdmin });
     const refreshToken = generateRefreshToken({ _id: user._id.toString(), isAdmin: user.isAdmin });
 
-    res.cookie("refreshToken" , refreshToken , {
+    res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
         sameSite: "strict",
@@ -142,7 +146,6 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res
 
 
 
-
 /**
  * @desc     refresh access token
  * @route   /api/auth/refresh-token
@@ -152,22 +155,21 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res
 export const refreshToken = asyncHandler(async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refreshToken;
 
-    if(!refreshToken)
-    {
-        res.status(401).json({message: "No refresh token provided!"});
-        return 
+    if (!refreshToken) {
+        res.status(401).json({ message: "No refresh token provided!" });
+        return
     }
 
-    try{
-        const decodedPayLoad = jwt.verify(refreshToken , process.env.TOKENS_SECRET_KEY!) as UserType;
+    try {
+        const decodedPayLoad = jwt.verify(refreshToken, process.env.TOKENS_SECRET_KEY!) as UserType;
         const newAccessToken = generateAccessToken(decodedPayLoad);
         res.status(200).json({
             message: "Token refreshed successfully",
-            token: newAccessToken 
+            token: newAccessToken
         })
     }
     catch {
-        res.status(403).json({message: "Invalid refresh token"})
+        res.status(403).json({ message: "Invalid refresh token" })
     }
 })
 
@@ -181,9 +183,8 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
 export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
     const refreshToken = req.cookies.refreshToken;
 
-    if(!refreshToken)
-    {
-        res.status(401).json({message: "No refresh token provided!"});
+    if (!refreshToken) {
+        res.status(401).json({ message: "No refresh token provided!" });
         return
     }
 
@@ -205,12 +206,11 @@ export const logoutUser = asyncHandler(async (req: Request, res: Response) => {
  * @method  GET
  * @access  public
  */
-export const verifyUser = asyncHandler(async (req: Request<{userId: string , token: string}>, res: Response) => {
-    const { userId , token } = req.params;
+export const verifyUser = asyncHandler(async (req: Request<{ userId: string, token: string }>, res: Response) => {
+    const { userId, token } = req.params;
     const user = await User.findById(userId);
-    if(!user)
-    {
-        res.status(404).json({message: "User not found!"});
+    if (!user) {
+        res.status(404).json({ message: "User not found!" });
         console.log("User not found!");
         return
     }
@@ -220,14 +220,73 @@ export const verifyUser = asyncHandler(async (req: Request<{userId: string , tok
         token
     });
 
-    if(!verificationToken)
-    {
-        res.status(400).json({message: "Invalid link!"});
+    if (!verificationToken) {
+        res.status(400).json({ message: "Invalid link!" });
         console.log("Invalid link!");
         return
     }
     user.isVerified = true;
     await user.save();
     await verificationToken.deleteOne();
-    res.status(200).json({message: "User verified successfully!"});
+    res.status(200).json({ message: "User verified successfully!" });
+})
+
+
+/**
+ * @desc     resend verification email
+ * @route   /api/auth/resend-verification-token
+ * @method  POST
+ * @access  public
+ */
+export const resendVerificationToken = asyncHandler(async (req: Request<ResendEmailParams>, res: Response) => {
+    const { userId } = req.params;
+
+    if (!userId) {
+        res.status(400).json({ message: "User ID is required!" });
+        return
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+        res.status(404).json({ message: "User not found!" });
+        return
+    }
+
+    if (user.isVerified) {
+        res.status(400).json({ message: "User already verified!" });
+        return
+    }
+
+    let verificationToken = await VerificationToken.findOne({
+        userId: user._id,
+    });
+
+    if (!verificationToken) {
+        verificationToken = await VerificationToken.create({
+            userId: user._id,
+            token: crypto.randomBytes(32).toString("hex")
+        })
+    }
+    const template = generateVerificationEmailTemplate({ username: user.username!, id: user._id.toString() }, verificationToken.token);
+
+    try {
+        await sendEmail({
+            userEmail: user.email!,
+            subject: "Verify your email",
+            htmlContent: template,
+            senderName: "Wasfa"
+        })
+    }
+    catch (err: unknown) {
+        if (err instanceof Error) {
+            res.status(500).json({ message: err.message });
+            return
+        }
+        else {
+            res.status(500).json({ message: "Something went wrong!" });
+            return
+        }
+    }
+
+    res.status(200).json({ message: "Verification email sent successfully!" });
 })
