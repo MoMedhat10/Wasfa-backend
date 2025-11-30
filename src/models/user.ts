@@ -62,7 +62,24 @@ const userRegistrationSchema = z.object({
 const userLoginSchema = z.object({
     email: z.string().email("Invalid email address").trim(),
     password: z.string().min(8, "Password must be at least 8 characters long").trim(),
-}) 
+})
+
+
+const validateEmailSchema = z.object({
+    email: z.string().email("Invalid email address").trim(),
+})
+
+
+const validateNewPasswordSchema = z.object({
+    password: z.string()
+        .min(8, "Password must be at least 8 characters long")
+        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
+            message: "Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character"
+        })
+        .trim()
+})
+
+
 
 export const validateLoginUser = (data: unknown) => {
     return userLoginSchema.safeParse(data);
@@ -71,5 +88,15 @@ export const validateLoginUser = (data: unknown) => {
 export const validateRegisterUser = (data: unknown) => {
     return userRegistrationSchema.safeParse(data)
 }
+
+export const validateEmail = (data: unknown) => {
+    return validateEmailSchema.safeParse(data);
+}
+
+export const validateNewPassword = (data: unknown) => {
+    return validateNewPasswordSchema.safeParse(data);
+}
+
+
 
 export default User

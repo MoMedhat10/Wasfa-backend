@@ -18,9 +18,6 @@ interface UserBody {
 }
 
 
-interface ResendEmailParams {
-    userId: string;
-}
 
 /**
  * @desc    Register new user
@@ -234,11 +231,11 @@ export const verifyUser = asyncHandler(async (req: Request<{ userId: string, tok
 
 /**
  * @desc     resend verification email
- * @route   /api/auth/resend-verification-token
+ * @route   /api/auth/users/:userId/resend-verification-token
  * @method  POST
  * @access  public
  */
-export const resendVerificationToken = asyncHandler(async (req: Request<ResendEmailParams>, res: Response) => {
+export const resendVerificationToken = asyncHandler(async (req: Request<{ userId: string }>, res: Response) => {
     const { userId } = req.params;
 
     if (!userId) {
