@@ -2,25 +2,26 @@ import { createRecipe, deleteRecipe, getRecipe, getRecipes, getRecipesCount, upd
 import express from "express";
 import photoUpload from "@middlewares/imgUpload";
 import validateObjectIds from "@middlewares/validateObjectIds";
+import { adminRoute } from "@middlewares/protectedRoutes";
 const router = express.Router();
 
 
 
 
 router.route("/")
-   .post(photoUpload.single("image") , createRecipe)
+   .post( adminRoute ,photoUpload.single("image") , createRecipe)
    .get(getRecipes)
 
 
    router.route("/:id")
-   .delete(validateObjectIds, deleteRecipe)
+   .delete(adminRoute,validateObjectIds, deleteRecipe)
    .get(validateObjectIds, getRecipe)
-   .put(validateObjectIds, updateRecipe)
+   .put(adminRoute,validateObjectIds, updateRecipe)
+ 
 
+   router.put("/upload-image/:id", adminRoute , validateObjectIds, photoUpload.single("image"), updateRecipeImage)
 
-   router.put("/upload-image/:id", validateObjectIds, photoUpload.single("image"), updateRecipeImage)
-
-router.get("/count", getRecipesCount)
+router.get("/count", adminRoute , getRecipesCount)
 
 
    export default router

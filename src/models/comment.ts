@@ -61,8 +61,15 @@ const commentSchema = z.object({
   body: z.string().min(2, "Body must be at least 2 characters long").trim(),
 });
 
+
+const commentOptionalSchema = commentSchema.partial();
+
 export const validateComment = (data: unknown) => {
   return commentSchema.safeParse(data);
+};
+
+export const validateOptionalComment = (data: unknown) => {
+  return commentOptionalSchema.safeParse(data);
 };
 
 export default Comment;

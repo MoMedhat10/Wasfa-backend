@@ -29,3 +29,18 @@ export const protectedRoute = (req: AuthenticatedRequest , res: Response , next:
 }
 
 
+export const adminRoute = (req: AuthenticatedRequest , res: Response , next: NextFunction) => {
+
+     protectedRoute(req , res , () => {
+
+        if (!req.user || !req.user.isAdmin) {
+            return res.status(401).json({ message: " admins only, Access denied" });
+        }
+        return next();
+     
+    })
+}
+
+
+
+//todo global declaration for the request instance.

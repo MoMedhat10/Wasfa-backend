@@ -1,6 +1,6 @@
 import { Request, Response } from "express"
 import asyncHandler from "express-async-handler";
-import Comment, { validateComment } from "../models/comment";
+import Comment, { validateComment, validateOptionalComment } from "../models/comment";
 import { Types } from "mongoose";
 import Recipe from "models/recipe";
 import User from "models/user";
@@ -78,6 +78,7 @@ export const getAllComments = asyncHandler(async (req: Request, res: Response) =
 })
 
 
+//todo
 /**
  * @desc    delete comment
  * @route   /api/comments/:id
@@ -96,4 +97,46 @@ export const deleteComment = asyncHandler(async (req: Request<{ id: string }>, r
     await Comment.findByIdAndDelete(commentId);
 
     res.status(200).json({ message: "Comment deleted successfully" });
+})
+
+
+
+
+//todo
+/**
+ * @desc    update comment
+ * @route   /api/comments/:id
+ * @method  PUT
+ * @access  private (logged in users)
+ */
+export const updateComment = asyncHandler(async (req: Request<{ id: string } , {}, CommentData>, res: Response) => {
+    const { id: commentId } = req.params;
+    const { body } = req.body;
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+        res.status(404).json({ message: "Comment not found" });
+        return;
+    }
+
+    const result = validateOptionalComment({ body });
+    if (!result.success) {
+        const formattedErrors = result.error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
+        }));
+
+        res.status(400).json({
+            message: "Validation failed",
+            errors: formattedErrors
+        });
+        return;
+    }
+
+    const updatedComment = await Comment.findByIdAndUpdate(commentId, { 
+        $set: {
+            body
+        }
+     }, { new: true });
+    res.status(200).json(updatedComment); 
 })
