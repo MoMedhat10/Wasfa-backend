@@ -60,3 +60,19 @@ export const createComment = asyncHandler(async (req: Request<{}, {}, CommentDat
     const comment = await Comment.create({ recipeId, userId, body , username: user.username });
     res.status(201).json(comment);
 })
+
+
+
+/**
+ * @desc    get all comments
+ * @route   /api/comments
+ * @method  GET
+ * @access  private (admin only)
+ */
+export const getAllComments = asyncHandler(async (req: Request, res: Response) => {
+    const comments = await Comment.find()
+        .populate("userId" , [ "-password" , "-isAdmin" , "-isVerified" , "-createdAt" , "-updatedAt" , "-__v"])
+        .populate("recipeId" , ["image" , "premium" , "_id" , "name"]);
+    
+    res.status(200).json(comments);
+})

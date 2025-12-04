@@ -1,6 +1,6 @@
 import express from "express";
 import validateObjectIds from "@middlewares/validateObjectIds";
-import { createComment } from "@controllers/comment.controller";
+import { createComment, getAllComments } from "@controllers/comment.controller";
 const router = express.Router();
 
 
@@ -8,6 +8,7 @@ const router = express.Router();
 
 router.route("/")
     .post(createComment)
+    .get(getAllComments)
 
 
 
