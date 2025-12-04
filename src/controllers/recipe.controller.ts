@@ -87,15 +87,53 @@ export const createRecipe = asyncHandler(async (req: Request<{}, {}, RecipeData>
 
 
 /**
+ * @desc   get recipes
+ * @route   /api/recipes
+ * @method  GET
+ * @access  public 
+ */
+export const getRecipes = asyncHandler(async (req: Request, res: Response) => {
+    //todo adding filter and pagination
+    const recipes = await Recipe.find();
+    res.status(200).json(recipes);
+})
+
+
+
+
+
+/**
  * @desc    get  recipes count
  * @route   /api/recipes/count
  * @method  GET
- * @access  public
+ * @access  private (admin only)
  */
 export const getRecipesCount = asyncHandler(async (req: Request, res: Response) => {
     const count = await Recipe.countDocuments();
     res.status(200).json({ count });
 })
+
+
+
+
+
+/**
+ * @desc    get single recipes 
+ * @route   /api/recipes/:id
+ * @method  GET
+ * @access  public
+ */
+export const getRecipe = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
+    const { id } = req.params;
+    const recipe = await Recipe.findById(id);
+    if (!recipe) {
+        res.status(404).json({ message: "Recipe not found" });
+        return;
+    }
+    res.status(200).json(recipe);
+})
+
+
 
 
 
