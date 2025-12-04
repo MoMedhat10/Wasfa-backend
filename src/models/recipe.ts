@@ -20,66 +20,57 @@ interface IRecipe extends Document {
 }
 
 
-const Recipe = model<IRecipe>("Recipe", new Schema<IRecipe>({
-    name: {
-        type: String,
-        required: true,
-        trim: true,
-        minlength: 2,
-        maxlength: 20
-    },
-    image: {
-        url: {
+
+const RecipeMongooseSchema = new Schema<IRecipe>(
+    {
+        name: {
             type: String,
             required: true,
+            trim: true,
+            minlength: 2,
+            maxlength: 20,
         },
-        public_id: {
+        image: {
+            url: { type: String, required: true },
+            public_id: { type: String, required: true },
+        },
+        description: {
             type: String,
             required: true,
-        }
+            trim: true,
+            minlength: 5,
+            maxlength: 100,
+        },
+        ingredients: { type: [String], required: true },
+        instructions: { type: [String], required: true },
+        rating: { type: Number, required: true },
+        cookTime: { type: Number, required: true },
+        servings: { type: Number, required: true },
+        level: {
+            type: String,
+            enum: ["Easy", "Intermediate", "Hard"],
+            required: true,
+            default: "Easy",
+        },
+        premium: { type: Boolean, required: true, default: false },
     },
-    description: {
-        type: String,
-        required: true,
-        trim: true,
-        minlength: 5,
-        maxlength: 100
-    },
-    ingredients: {
-        type: [String],
-        required: true,
-    },
-    instructions: {
-        type: [String],
-        required: true,
-    },
-    rating: {
-        type: Number,
-        required: true,
-    },
-    cookTime: {
-        type: Number,
-        required: true,
-    },
-    servings: {
-        type: Number,
-        required: true,
-    },
-    level: {
-        type: String,
-        enum: ["Easy", "Intermediate", "Hard"],
-        required: true,
-        default: "Easy"
-    },
-    premium: {
-        type: Boolean,
-        required: true,
-        default: false
-    },
-}, { timestamps: true }));
+    { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } }
+);
 
 
-const RecipeSchema = z.object({
+
+RecipeMongooseSchema.virtual("comments", {
+    ref: "Comment",
+    localField: "_id",
+    foreignField: "recipeId",
+});
+
+
+const Recipe = model<IRecipe>("Recipe", RecipeMongooseSchema);
+
+
+
+const RecipeZodSchema = z.object({
     name: z.string()
         .min(2, "Username must be at least 2 characters long")
         .max(20, "Username cannot exceed 20 characters")
@@ -119,10 +110,10 @@ const RecipeSchema = z.object({
 });
 
 
-const optionalRecipeSchema = RecipeSchema.partial();
+const optionalRecipeSchema = RecipeZodSchema.partial();
 
 export const validateRecipe = (data: unknown) => {
-    return RecipeSchema.safeParse(data);
+    return RecipeZodSchema.safeParse(data);
 }
 
 export const validateOptionalRecipe = (data: unknown) => {

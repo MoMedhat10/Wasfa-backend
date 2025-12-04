@@ -127,7 +127,7 @@ export const getRecipesCount = asyncHandler(async (req: Request, res: Response) 
  */
 export const getRecipe = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
     const { id } = req.params;
-    const recipe = await Recipe.findById(id);
+    const recipe = await Recipe.findById(id).populate("comments" , ["-__v"]);
     if (!recipe) {
         res.status(404).json({ message: "Recipe not found" });
         return;
@@ -154,8 +154,8 @@ export const deleteRecipe = asyncHandler(async (req: Request<{ id: string }>, re
         return;
     }
 
-      await cloudinaryRemoveImage(recipe.image.public_id);
-      await Recipe.findByIdAndDelete(id);
+    await cloudinaryRemoveImage(recipe.image.public_id);
+    await Recipe.findByIdAndDelete(id);
 
 
     res.status(200).json({ message: "Recipe deleted successfully" });
@@ -242,8 +242,8 @@ export const updateRecipe = asyncHandler(async (req: Request<{ id: string }, {},
         cookTime,
         servings
     }, { new: true });
-    
-    
+
+
 
     res.status(200).json(updatedRecipe);
 })

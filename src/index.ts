@@ -12,6 +12,9 @@ import { logger } from "@middlewares/logger"
 import authRoute from "@routes/auth.route"
 import passwordRoute from "@routes/password.route"
 import recipeRoute from "@routes/recipe.route"
+import commentRoute from "@routes/comment.route"
+
+
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,6 +34,7 @@ app.use(logger);
 app.use("/api/auth", authRoute)
 app.use("/api/password", passwordRoute)
 app.use("/api/recipes", recipeRoute)
+app.use("/api/comments", commentRoute)
 
 
 
