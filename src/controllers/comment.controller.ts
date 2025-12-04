@@ -76,3 +76,24 @@ export const getAllComments = asyncHandler(async (req: Request, res: Response) =
     
     res.status(200).json(comments);
 })
+
+
+/**
+ * @desc    delete comment
+ * @route   /api/comments/:id
+ * @method  DELETE
+ * @access  private (admin and logged in users)
+ */
+export const deleteComment = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
+    const { id: commentId } = req.params;
+
+    const comment = await Comment.findById(commentId);
+    if (!comment) {
+        res.status(404).json({ message: "Comment not found" });
+        return;
+    }
+
+    await Comment.findByIdAndDelete(commentId);
+
+    res.status(200).json({ message: "Comment deleted successfully" });
+})

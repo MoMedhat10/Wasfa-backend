@@ -4,6 +4,7 @@ import Recipe, { validateOptionalRecipe, validateRecipe } from "models/recipe";
 import fs from "fs";
 import path from "path";
 import { cloudinaryRemoveImage, cloudinaryUploadImage } from "@utils/cloudinary";
+import Comment from "models/comment";
 
 
 //todo protecting routes and adding filters and pagination
@@ -156,6 +157,7 @@ export const deleteRecipe = asyncHandler(async (req: Request<{ id: string }>, re
 
     await cloudinaryRemoveImage(recipe.image.public_id);
     await Recipe.findByIdAndDelete(id);
+    await Comment.deleteMany({ recipeId: id });
 
 
     res.status(200).json({ message: "Recipe deleted successfully" });
