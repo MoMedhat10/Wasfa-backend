@@ -118,8 +118,15 @@ const RecipeSchema = z.object({
 
 });
 
+
+const optionalRecipeSchema = RecipeSchema.partial();
+
 export const validateRecipe = (data: unknown) => {
     return RecipeSchema.safeParse(data);
+}
+
+export const validateOptionalRecipe = (data: unknown) => {
+    return optionalRecipeSchema.safeParse(data);
 }
 
 

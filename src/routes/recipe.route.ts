@@ -1,4 +1,4 @@
-import { createRecipe, deleteRecipe, getRecipe, getRecipes, getRecipesCount, updateRecipeImage } from "@controllers/recipe.controller";
+import { createRecipe, deleteRecipe, getRecipe, getRecipes, getRecipesCount, updateRecipe, updateRecipeImage } from "@controllers/recipe.controller";
 import express from "express";
 import photoUpload from "@middlewares/imgUpload";
 import validateObjectIds from "@middlewares/validateObjectIds";
@@ -15,7 +15,10 @@ router.route("/")
    router.route("/:id")
    .delete(validateObjectIds, deleteRecipe)
    .get(validateObjectIds, getRecipe)
-   .put(validateObjectIds, photoUpload.single("image"), updateRecipeImage)
+   .put(validateObjectIds, updateRecipe)
+
+
+   router.put("/upload-image/:id", validateObjectIds, photoUpload.single("image"), updateRecipeImage)
 
 router.get("/count", getRecipesCount)
 

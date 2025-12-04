@@ -1,10 +1,12 @@
 import { Request, Response } from "express"
 import asyncHandler from "express-async-handler";
-import Recipe, { validateRecipe } from "models/recipe";
+import Recipe, { validateOptionalRecipe, validateRecipe } from "models/recipe";
 import fs from "fs";
 import path from "path";
 import { cloudinaryRemoveImage, cloudinaryUploadImage } from "@utils/cloudinary";
 
+
+//todo protecting routes and adding filters and pagination
 
 
 interface RecipeData {
@@ -194,4 +196,54 @@ export const updateRecipeImage = asyncHandler(async (req: Request<{ id: string }
     fs.unlinkSync(imagePath);
 
     res.status(200).json(recipe);
+})
+
+
+
+
+
+/**
+ * @desc    update recipe
+ * @route   /api/recipes/:id
+ * @method  PUT
+ * @access  private (admin only)
+ */
+export const updateRecipe = asyncHandler(async (req: Request<{ id: string }, {}, RecipeData>, res: Response) => {
+    const { name, description, ingredients, instructions, level, rating, cookTime, servings } = req.body;
+
+    const { id } = req.params;
+    const recipe = await Recipe.findById(id);
+    if (!recipe) {
+        res.status(404).json({ message: "Recipe not found" });
+        return;
+    }
+
+    const result = validateOptionalRecipe(req.body);
+    if (!result.success) {
+        const formattedErrors = result.error.issues.map(issue => ({
+            field: issue.path.join('.'),
+            message: issue.message
+        }));
+
+        res.status(400).json({
+            message: "Validation failed",
+            errors: formattedErrors
+        });
+        return;
+    }
+
+    const updatedRecipe = await Recipe.findByIdAndUpdate(id, {
+        name,
+        description,
+        ingredients,
+        instructions,
+        level,
+        rating,
+        cookTime,
+        servings
+    }, { new: true });
+    
+    
+
+    res.status(200).json(updatedRecipe);
 })
