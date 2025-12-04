@@ -118,7 +118,7 @@ export const getRecipesCount = asyncHandler(async (req: Request, res: Response) 
 
 
 /**
- * @desc    get single recipes 
+ * @desc    get single recipe
  * @route   /api/recipes/:id
  * @method  GET
  * @access  public
@@ -157,4 +157,41 @@ export const deleteRecipe = asyncHandler(async (req: Request<{ id: string }>, re
 
 
     res.status(200).json({ message: "Recipe deleted successfully" });
+})
+
+
+
+
+/**
+ * @desc     update recipe image
+ * @route   /api/recipes/upload-image/:recipeId  ||  [:id]
+ * @method   PUT
+ * @access   private  (admin only)
+ */
+export const updateRecipeImage = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
+    const { id } = req.params;
+    const recipe = await Recipe.findById(id);
+    if (!recipe) {
+        res.status(404).json({ message: "Recipe not found" });
+        return;
+    }
+
+    if (!req.file) {
+        res.status(400).json({ message: "No image provided." })
+        return
+    }
+
+    const imagePath = path.join(imgDir, req.file.filename);
+    const image = await cloudinaryUploadImage(imagePath);
+
+    await cloudinaryRemoveImage(recipe.image.public_id);
+    recipe.image = {
+        url: image.secure_url,
+        public_id: image.public_id
+    }
+    await recipe.save();
+
+    fs.unlinkSync(imagePath);
+
+    res.status(200).json(recipe);
 })
