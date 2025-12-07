@@ -9,6 +9,18 @@ import Comment from "models/comment";
 
 //todo protecting routes and adding filters and pagination
 
+type sortByType = "name" | "rating" | "cookTime" | "servings";
+type sortType = "asc" | "desc";
+type filterType = "all" | "quick" | "medium" | "long" | "high-rated";
+
+interface RecipeFilter {
+    sortBy?: sortByType;
+    sort?: sortType;
+    filter?: filterType; 
+    page?: number;
+    limit?: number;
+}
+
 
 interface RecipeData {
     name: string;
@@ -95,10 +107,43 @@ export const createRecipe = asyncHandler(async (req: Request<{}, {}, RecipeData>
  * @method  GET
  * @access  public 
  */
-export const getRecipes = asyncHandler(async (req: Request, res: Response) => {
-    //todo adding filter and pagination
-    const recipes = await Recipe.find();
-    res.status(200).json(recipes);
+export const getRecipes = asyncHandler(async (req: Request<{} , {} , {} , RecipeFilter >, res: Response) => {
+    const {sort = "asc" , sortBy = "name" , filter = "all" , page = 1 , limit = 6} = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const query: any = {};
+    const sortQuery: any = {};
+
+    if(filter === "quick") {
+        query.cookTime = { $lte: 30 };
+    }
+
+    if(filter === "medium") {
+        query.cookTime = { $gt: 30 , $lte: 60 };
+    }
+
+    if(filter === "long") {
+        query.cookTime = { $gt: 60 };
+    }
+
+    if(filter === "high-rated") {
+        query.rating = { $gte: 4 };
+    }
+
+   sortQuery[sortBy] = sort === "asc" ? 1 : -1;
+
+    const recipes = await Recipe.find(query).sort(sortQuery).skip(skip).limit(Number(limit));
+     const total = await Recipe.countDocuments(query);
+     const totalPages = Math.ceil(total / Number(limit));
+
+
+    res.status(200).json({
+        recipes,
+        total,
+        totalPages,
+        page ,
+        limit
+    });
 })
 
 
