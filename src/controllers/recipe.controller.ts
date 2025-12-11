@@ -5,13 +5,10 @@ import fs from "fs";
 import path from "path";
 import { cloudinaryRemoveImage, cloudinaryUploadImage } from "@utils/cloudinary";
 import Comment from "models/comment";
+import { sortByType, sortType, filterType } from "@utils/types";
 
 
-//todo protecting routes and adding filters and pagination
 
-type sortByType = "name" | "rating" | "cookTime" | "servings";
-type sortType = "asc" | "desc";
-type filterType = "all" | "quick" | "medium" | "long" | "high-rated";
 
 interface RecipeFilter {
     sortBy?: sortByType;

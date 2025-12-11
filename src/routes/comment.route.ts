@@ -12,10 +12,10 @@ router.route("/")
     .get(adminRoute , getAllComments)
 
 
-//todo
+
 router.route("/:id")
-    .delete(validateObjectIds , deleteComment)
-    .put(validateObjectIds , updateComment)
+    .delete(validateObjectIds , protectedRoute , deleteComment)
+    .put(validateObjectIds , protectedRoute , updateComment)
 
 
 export default router

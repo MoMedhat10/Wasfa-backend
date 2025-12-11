@@ -2,12 +2,10 @@ import jwt from "jsonwebtoken";
 import { Request, Response, NextFunction } from "express";
 import { UserType } from "@utils/generateTokens"
 
-export interface AuthenticatedRequest extends Request {
-    user?: UserType
-}
 
 
-export const protectedRoute = (req: AuthenticatedRequest , res: Response , next: NextFunction) => {
+
+export const protectedRoute = (req: Request , res: Response , next: NextFunction) => {
 
     const accessToken = req.headers["authorization"] ;
 
@@ -29,7 +27,7 @@ export const protectedRoute = (req: AuthenticatedRequest , res: Response , next:
 }
 
 
-export const adminRoute = (req: AuthenticatedRequest , res: Response , next: NextFunction) => {
+export const adminRoute = (req: Request , res: Response , next: NextFunction) => {
 
      protectedRoute(req , res , () => {
 
@@ -42,5 +40,5 @@ export const adminRoute = (req: AuthenticatedRequest , res: Response , next: Nex
 }
 
 
+ 
 
-//todo global declaration for the request instance.

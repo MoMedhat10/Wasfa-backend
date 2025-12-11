@@ -72,7 +72,7 @@ export const createComment = asyncHandler(async (req: Request<{}, {}, CommentDat
 export const getAllComments = asyncHandler(async (req: Request, res: Response) => {
     const comments = await Comment.find()
         .populate("userId" , [ "-password" , "-isAdmin" , "-isVerified" , "-createdAt" , "-updatedAt" , "-__v"])
-        .populate("recipeId" , ["image" , "premium" , "_id" , "name"]);
+        .populate("recipeId" , ["image" , "premium" , "_id" , "name"]); 
     
     res.status(200).json(comments);
 })
@@ -92,6 +92,12 @@ export const deleteComment = asyncHandler(async (req: Request<{ id: string }>, r
     if (!comment) {
         res.status(404).json({ message: "Comment not found" });
         return;
+    }
+
+    if(req.user?._id.toString() !== comment.userId.toString() && !req.user!.isAdmin)
+    {
+        res.status(401).json({ message: "Unauthorized" });
+        return; 
     }
 
     await Comment.findByIdAndDelete(commentId);
