@@ -129,7 +129,7 @@ export const getRecipes = asyncHandler(async (req: Request<{} , {} , {} , Recipe
 
    sortQuery[sortBy] = sort === "asc" ? 1 : -1;
 
-    const recipes = await Recipe.find(query).sort(sortQuery).skip(skip).limit(Number(limit));
+    const recipes = await Recipe.find(query).sort(sortQuery).skip(skip).limit(Number(limit)).populate("comments" , ["-__v"]);
      const total = await Recipe.countDocuments(query);
      const totalPages = Math.ceil(total / Number(limit));
 

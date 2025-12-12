@@ -12,6 +12,7 @@ interface CommentData {
     recipeId: Types.ObjectId;
     userId: Types.ObjectId;
     body: string;
+    rating : number;
 }
 
 
@@ -22,7 +23,7 @@ interface CommentData {
  * @access  private (logged in users)
  */
 export const createComment = asyncHandler(async (req: Request<{}, {}, CommentData>, res: Response) => {
-    const { recipeId, userId, body } = req.body;
+    const { recipeId, userId, body , rating } = req.body;
 
     if(!Types.ObjectId.isValid(recipeId) || !Types.ObjectId.isValid(userId)) {
         res.status(400).json({ message: "Invalid recipe or user ID" });
@@ -57,7 +58,7 @@ export const createComment = asyncHandler(async (req: Request<{}, {}, CommentDat
 
 
 
-    const comment = await Comment.create({ recipeId, userId, body , username: user.username });
+    const comment = await Comment.create({ recipeId, userId, body , username: user.username , rating });
     res.status(201).json(comment);
 })
 
@@ -137,6 +138,12 @@ export const updateComment = asyncHandler(async (req: Request<{ id: string } , {
             errors: formattedErrors
         });
         return;
+    }
+
+    if(req.user?._id.toString() !== comment.userId.toString())
+    {
+        res.status(401).json({ message: "Unauthorized" });
+        return; 
     }
 
     const updatedComment = await Comment.findByIdAndUpdate(commentId, { 

@@ -14,9 +14,9 @@ router.route("/")
 
 
    router.route("/:id")
-   .delete(adminRoute,validateObjectIds, deleteRecipe)
+   .delete(validateObjectIds, adminRoute, deleteRecipe)
    .get(validateObjectIds, getRecipe)
-   .put(adminRoute,validateObjectIds, updateRecipe)
+   .put(validateObjectIds, adminRoute, updateRecipe)
  
 
    router.put("/upload-image/:id", adminRoute , validateObjectIds, photoUpload.single("image"), updateRecipeImage)

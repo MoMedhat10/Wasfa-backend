@@ -6,6 +6,7 @@ export interface IComment extends Document {
   userId: Types.ObjectId;
   body: string;
   username: string;
+  rating : number;
 }
 
 const CommentSchema = new Schema<IComment>(
@@ -31,6 +32,12 @@ const CommentSchema = new Schema<IComment>(
       required: true,
       trim: true,
     },
+    rating : {
+      type : Number,
+      required : true,
+      min : 1,
+      max : 5
+    }
   },
   { timestamps: true }
 );
@@ -59,6 +66,7 @@ const Comment = model<IComment>("Comment", CommentSchema);
 
 const commentSchema = z.object({
   body: z.string().min(2, "Body must be at least 2 characters long").trim(),
+  rating : z.number().min(1, "Rating must be at least 1").max(5, "Rating must be at most 5")
 });
 
 
