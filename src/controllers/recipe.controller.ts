@@ -13,9 +13,10 @@ import { sortByType, sortType, filterType } from "@utils/types";
 interface RecipeFilter {
     sortBy?: sortByType;
     sort?: sortType;
-    filter?: filterType; 
+    filter?: filterType;
     page?: number;
     limit?: number;
+    ingredients?: string | string[];
 }
 
 
@@ -104,41 +105,58 @@ export const createRecipe = asyncHandler(async (req: Request<{}, {}, RecipeData>
  * @method  GET
  * @access  public 
  */
-export const getRecipes = asyncHandler(async (req: Request<{} , {} , {} , RecipeFilter >, res: Response) => {
-    const {sort = "asc" , sortBy = "name" , filter = "all" , page = 1 , limit = 6} = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
+export const getRecipes = asyncHandler(async (req: Request<{}, {}, {}, RecipeFilter>, res: Response) => {
+    let { sort = "asc", sortBy = "name", filter = "all", page = 1, limit = 6, ingredients } = req.query;
 
+    let ingredientsArray: string[] = [];
+    if (ingredients) {
+        if (Array.isArray(ingredients)) {
+            ingredientsArray = ingredients as string[];
+        } else if (typeof ingredients === "string") {
+            ingredientsArray = ingredients.split(",");
+        }
+    }
+
+    const sanitizedIngredients = ingredientsArray.map(i => i.trim()).filter(i => i.length > 0);
+    console.log(sanitizedIngredients);
+
+
+    const skip = (Number(page) - 1) * Number(limit);
     const query: any = {};
     const sortQuery: any = {};
 
-    if(filter === "quick") {
+    if (filter === "quick") {
         query.cookTime = { $lte: 30 };
     }
 
-    if(filter === "medium") {
-        query.cookTime = { $gt: 30 , $lte: 60 };
+    if (filter === "medium") {
+        query.cookTime = { $gt: 30, $lte: 60 };
     }
 
-    if(filter === "long") {
+    if (filter === "long") {
         query.cookTime = { $gt: 60 };
     }
 
-    if(filter === "high-rated") {
+    if (filter === "high-rated") {
         query.rating = { $gte: 4 };
     }
 
-   sortQuery[sortBy] = sort === "asc" ? 1 : -1;
+    if (sanitizedIngredients.length > 0) {
+        query.ingredients = { $all: sanitizedIngredients };
+    }
 
-    const recipes = await Recipe.find(query).sort(sortQuery).skip(skip).limit(Number(limit)).populate("comments" , ["-__v"]);
-     const total = await Recipe.countDocuments(query);
-     const totalPages = Math.ceil(total / Number(limit));
+    sortQuery[sortBy] = sort === "asc" ? 1 : -1;
+
+    const recipes = await Recipe.find(query).sort(sortQuery).skip(skip).limit(Number(limit)).populate("comments", ["-__v"]);
+    const total = await Recipe.countDocuments(query);
+    const totalPages = Math.ceil(total / Number(limit));
 
 
     res.status(200).json({
         recipes,
         total,
         totalPages,
-        page ,
+        page,
         limit
     });
 })
@@ -170,7 +188,7 @@ export const getRecipesCount = asyncHandler(async (req: Request, res: Response) 
  */
 export const getRecipe = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
     const { id } = req.params;
-    const recipe = await Recipe.findById(id).populate("comments" , ["-__v"]);
+    const recipe = await Recipe.findById(id).populate("comments", ["-__v"]);
     if (!recipe) {
         res.status(404).json({ message: "Recipe not found" });
         return;
