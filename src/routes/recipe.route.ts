@@ -1,8 +1,8 @@
-import { createRecipe, deleteRecipe, getRecipe, getRecipes, getRecipesCount, updateRecipe, updateRecipeImage } from "@controllers/recipe.controller";
+import { createRecipe, deleteRecipe, getRecipe, getRecipes, getRecipesCount, toggleFavoriteRecipe, updateRecipe, updateRecipeImage } from "@controllers/recipe.controller";
 import express from "express";
 import photoUpload from "@middlewares/imgUpload";
 import validateObjectIds from "@middlewares/validateObjectIds";
-import { adminRoute } from "@middlewares/protectedRoutes";
+import { adminRoute, protectedRoute } from "@middlewares/protectedRoutes";
 const router = express.Router();
 
 
@@ -22,6 +22,8 @@ router.route("/")
    router.put("/upload-image/:id", adminRoute , validateObjectIds, photoUpload.single("image"), updateRecipeImage)
 
 router.get("/count", adminRoute , getRecipesCount)
+
+router.put("/favorite/:id", protectedRoute , validateObjectIds, toggleFavoriteRecipe)
 
 
    export default router

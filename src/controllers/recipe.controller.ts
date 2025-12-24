@@ -6,6 +6,7 @@ import path from "path";
 import { cloudinaryRemoveImage, cloudinaryUploadImage } from "@utils/cloudinary";
 import Comment from "models/comment";
 import { sortByType, sortType, filterType } from "@utils/types";
+import User from "models/user"
 
 
 
@@ -308,4 +309,41 @@ export const updateRecipe = asyncHandler(async (req: Request<{ id: string }, {},
 
 
     res.status(200).json(updatedRecipe);
+})
+
+
+
+
+
+
+/**
+ * @desc    toggle favorite recipe
+ * @route   /api/recipes/favorite/:id
+ * @method  PUT
+ * @access  private (logged in users)
+ */ 
+export const toggleFavoriteRecipe = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
+    const { id: recipeId } = req.params;
+    const userId = req.user?._id;
+
+    let user = await User.findById(userId);
+    if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+    }
+    
+    const recipe = await Recipe.findById(recipeId);
+    if (!recipe) {
+        res.status(404).json({ message: "Recipe not found" });
+        return;
+    }
+
+    const isFavorite = user.favoriteRecipes.find(id => id.toString() === recipeId);
+    if (isFavorite) {
+        user = await User.findByIdAndUpdate(userId, { $pull: { favoriteRecipes: recipeId } }, { new: true });
+    } else {
+        user = await User.findByIdAndUpdate(userId, { $push: { favoriteRecipes: recipeId } }, { new: true });
+    }
+    
+    res.status(200).json(user);
 })

@@ -14,7 +14,11 @@ import User from "../models/user"
  */
 export const getUserProfile = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
     const { id: userId } = req.params;
-    const user = await User.findById(userId).select("-password -isAdmin -isVerified  -updatedAt -__v").populate("comments");
+    const user = await User.findById(userId).select("-password -isAdmin -isVerified  -updatedAt -__v")
+    .populate("comments")
+    .populate("favoriteRecipes")
+
+
     if (!user) {
         res.status(404).json({ message: 'User not found' })
         return
