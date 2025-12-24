@@ -13,6 +13,7 @@ import authRoute from "@routes/auth.route"
 import passwordRoute from "@routes/password.route"
 import recipeRoute from "@routes/recipe.route"
 import commentRoute from "@routes/comment.route"
+import profileRoute from "@routes/profile.route"
 
 
 
@@ -35,7 +36,7 @@ app.use("/api/auth", authRoute)
 app.use("/api/password", passwordRoute)
 app.use("/api/recipes", recipeRoute)
 app.use("/api/comments", commentRoute)
-
+app.use("/api/profile", profileRoute)
 
 
 app.use(notFound)

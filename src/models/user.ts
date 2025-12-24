@@ -11,9 +11,9 @@ interface IUser extends Document {
     subscription: SubscriptionType,
     isAdmin: boolean
 }
+ 
 
-
-const User = model<IUser>("User", new Schema<IUser>({
+const userSchema = new Schema<IUser>({
     username: {
         type: String,
         required: true,
@@ -36,7 +36,18 @@ const User = model<IUser>("User", new Schema<IUser>({
     isVerified: { type: Boolean, default: false },
     subscription: { type: String, enum: ["FREE", "BASIC", "PRO"], default: "FREE" },
     isAdmin: { type: Boolean, default: false }
-}, { timestamps: true }));
+}, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
+
+
+userSchema.virtual("comments", {
+    ref: "Comment",
+    localField: "_id",
+    foreignField: "userId",
+})
+
+
+const User = model<IUser>("User", userSchema);
+
 
 
 const userRegistrationSchema = z.object({
