@@ -9,6 +9,7 @@ import { generateAccessToken, generateRefreshToken } from "@utils/generateTokens
 import jwt from "jsonwebtoken";
 import { UserType } from "@utils/generateTokens";
 import { generateVerificationEmailTemplate } from "@utils/templates";
+import Activity from "../models/activity";
 
 interface UserBody {
     username?: string;
@@ -75,6 +76,16 @@ export const registerUser = asyncHandler(async (req: Request<{}, {}, UserBody>, 
         senderName: "Wasfa"
     })
 
+    await Activity.create({
+        user: newUser._id,
+        action: "REGISTERED_USER",
+        targetId: newUser._id,
+        targetModel: "User",
+        details: {
+            message: `New user registered: ${newUser.username}`
+        }
+    });
+
 
     res.status(201).json({ message: "User registered successfully" })
 })
@@ -138,7 +149,18 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res
         message: `Welcome back ${user.username}!`,
         token: accessToken
     })
+
+    await Activity.create({
+        user: user._id,
+        action: "LOGGED_IN",
+        targetId: user._id,
+        targetModel: "User",
+        details: {
+            message: `User ${user.username} logged in`
+        }
+    });
 })
+
 
 
 
@@ -225,6 +247,18 @@ export const verifyUser = asyncHandler(async (req: Request<{ userId: string, tok
     user.isVerified = true;
     await user.save();
     await verificationToken.deleteOne();
+
+
+    await Activity.create({
+        user: user._id,
+        action: "VERIFIED_EMAIL",
+        targetId: user._id,
+        targetModel: "User",
+        details: {
+            message: `User ${user.username} verified their email`
+        }
+    });
+
     res.status(200).json({ message: "User verified successfully!" });
 })
 
