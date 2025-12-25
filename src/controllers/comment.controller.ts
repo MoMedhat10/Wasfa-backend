@@ -4,6 +4,7 @@ import Comment, { validateComment, validateOptionalComment } from "../models/com
 import { Types } from "mongoose";
 import Recipe from "models/recipe";
 import User from "models/user";
+import Activity from "../models/activity";
 
 
 
@@ -12,7 +13,7 @@ interface CommentData {
     recipeId: Types.ObjectId;
     userId: Types.ObjectId;
     body: string;
-    rating : number;
+    rating: number;
 }
 
 
@@ -23,11 +24,11 @@ interface CommentData {
  * @access  private (logged in users)
  */
 export const createComment = asyncHandler(async (req: Request<{}, {}, CommentData>, res: Response) => {
-    const { recipeId, userId, body , rating } = req.body;
+    const { recipeId, userId, body, rating } = req.body;
 
-    if(!Types.ObjectId.isValid(recipeId) || !Types.ObjectId.isValid(userId)) {
+    if (!Types.ObjectId.isValid(recipeId) || !Types.ObjectId.isValid(userId)) {
         res.status(400).json({ message: "Invalid recipe or user ID" });
-        return; 
+        return;
     }
 
     const recipe = await Recipe.findById(recipeId);
@@ -58,7 +59,18 @@ export const createComment = asyncHandler(async (req: Request<{}, {}, CommentDat
 
 
 
-    const comment = await Comment.create({ recipeId, userId, body , username: user.username , rating });
+    const comment = await Comment.create({ recipeId, userId, body, username: user.username, rating });
+
+    await Activity.create({
+        user: userId,
+        action: "CREATED_COMMENT",
+        targetId: comment._id,
+        targetModel: "Comment",
+        details: {
+            message: `User ${user.username} commented on recipe: ${recipe.name}`
+        }
+    });
+
     res.status(201).json(comment);
 })
 
@@ -72,9 +84,9 @@ export const createComment = asyncHandler(async (req: Request<{}, {}, CommentDat
  */
 export const getAllComments = asyncHandler(async (req: Request, res: Response) => {
     const comments = await Comment.find()
-        .populate("userId" , [ "-password" , "-isAdmin" , "-isVerified" , "-createdAt" , "-updatedAt" , "-__v"])
-        .populate("recipeId" , ["image" , "premium" , "_id" , "name"]); 
-    
+        .populate("userId", ["-password", "-isAdmin", "-isVerified", "-createdAt", "-updatedAt", "-__v"])
+        .populate("recipeId", ["image", "premium", "_id", "name"]);
+
     res.status(200).json(comments);
 })
 
@@ -95,13 +107,24 @@ export const deleteComment = asyncHandler(async (req: Request<{ id: string }>, r
         return;
     }
 
-    if(req.user?._id.toString() !== comment.userId.toString() && !req.user!.isAdmin)
-    {
+    if (req.user?._id.toString() !== comment.userId.toString() && !req.user!.isAdmin) {
         res.status(401).json({ message: "Unauthorized" });
-        return; 
+        return;
     }
 
     await Comment.findByIdAndDelete(commentId);
+
+    const recipe = await Recipe.findById(comment.recipeId);
+
+    await Activity.create({
+        user: req.user?._id,
+        action: "DELETED_COMMENT",
+        targetId: comment._id,
+        targetModel: "Comment",
+        details: {
+            message: `Comment by ${comment.username} on recipe ${recipe?.name || 'Unknown'} was deleted by ${req.user?.isAdmin ? 'Admin' : 'User'}`
+        }
+    });
 
     res.status(200).json({ message: "Comment deleted successfully" });
 })
@@ -116,9 +139,11 @@ export const deleteComment = asyncHandler(async (req: Request<{ id: string }>, r
  * @method  PUT
  * @access  private (logged in users)
  */
-export const updateComment = asyncHandler(async (req: Request<{ id: string } , {}, CommentData>, res: Response) => {
+export const updateComment = asyncHandler(async (req: Request<{ id: string }, {}, CommentData>, res: Response) => {
     const { id: commentId } = req.params;
     const { body } = req.body;
+    const user = await User.findById(req.user?._id);
+    
 
     const comment = await Comment.findById(commentId);
     if (!comment) {
@@ -140,16 +165,27 @@ export const updateComment = asyncHandler(async (req: Request<{ id: string } , {
         return;
     }
 
-    if(req.user?._id.toString() !== comment.userId.toString())
-    {
+    if (req.user?._id.toString() !== comment.userId.toString()) {
         res.status(401).json({ message: "Unauthorized" });
-        return; 
+        return;
     }
 
-    const updatedComment = await Comment.findByIdAndUpdate(commentId, { 
+    const updatedComment = await Comment.findByIdAndUpdate(commentId, {
         $set: {
             body
         }
-     }, { new: true });
-    res.status(200).json(updatedComment); 
+    }, { new: true });
+
+
+    await Activity.create({
+        user: req.user?._id,
+        action: "UPDATED_COMMENT",
+        targetId: updatedComment?._id,
+        targetModel: "Comment",
+        details: {
+            message: `User ${user?.username} updated their comment`
+        }
+    });
+
+    res.status(200).json(updatedComment);
 })
