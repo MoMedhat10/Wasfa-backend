@@ -6,6 +6,7 @@ import crypto from "crypto";
 import { generateResetPasswordEmailTemplate } from "@utils/templates";
 import { sendEmail } from "@utils/sendEmail";
 import bcrypt from "bcryptjs";
+import Activity from "../models/activity";
 
 
 
@@ -54,18 +55,28 @@ export const sentResetPasswordLink = asyncHandler(async (req: Request<{}, {}, { 
         id: user._id.toString()
     }, verificationToken.token);
 
-    try{
+    try {
         await sendEmail({
             userEmail: email!,
             subject: "Reset Password",
             htmlContent: template,
             senderName: "Wasfa"
         });
-    }catch(error){
+    } catch (error) {
         console.log(error);
         res.status(500).json({ message: "Failed to send reset password link!" });
         return;
     }
+
+    await Activity.create({
+        user: user._id,
+        action: "REQUESTED_RESET_PASSWORD",
+        targetId: user._id,
+        targetModel: "User",
+        details: {
+            message: `User ${user.username} requested a password reset link`
+        }
+    });
 
     res.status(200).json({ message: "Reset password link sent successfully!" });
 })
@@ -95,7 +106,7 @@ export const getResetPasswordLink = asyncHandler(async (req: Request<{ userId: s
         return;
     }
 
-    
+
     res.status(200).json({ message: "Link is valid!" });
 })
 
@@ -113,7 +124,7 @@ export const resetPassword = asyncHandler(async (req: Request<{ userId: string, 
     const result = validateNewPassword(req.body);
     if (!result.success) {
         const formattedErrors = result.error.issues.map(issue => ({
-            field: issue.path.join('.'), 
+            field: issue.path.join('.'),
             message: issue.message
         }));
 
@@ -136,7 +147,7 @@ export const resetPassword = asyncHandler(async (req: Request<{ userId: string, 
         return;
     }
 
-    if(!user.isVerified){
+    if (!user.isVerified) {
         user.isVerified = true;
     }
 
@@ -146,6 +157,16 @@ export const resetPassword = asyncHandler(async (req: Request<{ userId: string, 
     user.password = hashedPassword;
     await user.save();
     await verificationToken.deleteOne();
+
+    await Activity.create({
+        user: user._id,
+        action: "RESET_PASSWORD",
+        targetId: user._id,
+        targetModel: "User",
+        details: {
+            message: `User ${user.username} successfully reset their password`
+        }
+    });
 
     res.status(200).json({ message: "Password reset successfully!" });
 })
