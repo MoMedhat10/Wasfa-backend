@@ -1,11 +1,11 @@
-import { Document, Schema, model } from "mongoose";
+import { Document, Schema, model, Types } from "mongoose";
 import { z } from "zod";
 
 interface IActivity extends Document {
-    user: Schema.Types.ObjectId;
+    user: Types.ObjectId;
     action: string;
     details?: Record<string, any>;
-    targetId?: Schema.Types.ObjectId;
+    targetId?: Types.ObjectId;
     targetModel?: string;   // for optional population
 }
 

@@ -7,6 +7,7 @@ import { cloudinaryRemoveImage, cloudinaryUploadImage } from "@utils/cloudinary"
 import Comment from "models/comment";
 import { sortByType, sortType, filterType } from "@utils/types";
 import User from "models/user"
+import Activity from "../models/activity";
 
 
 
@@ -92,6 +93,19 @@ export const createRecipe = asyncHandler(async (req: Request<{}, {}, RecipeData>
     })
 
     fs.unlinkSync(imagePath);
+
+
+
+    await Activity.create({
+        user: req.user?._id,
+        action: "CREATED_RECIPE",
+        targetId: recipe._id,
+        targetModel: "Recipe",
+        details: {
+            name: recipe.name,
+            message: `Admin created a new recipe: ${recipe.name}`
+        }
+    });
 
     res.status(201).json(recipe);
 })
@@ -221,6 +235,20 @@ export const deleteRecipe = asyncHandler(async (req: Request<{ id: string }>, re
     await Comment.deleteMany({ recipeId: id });
 
 
+
+
+
+    await Activity.create({
+        user: req.user?._id,
+        action: "DELETED_RECIPE",
+        targetId: recipe._id,
+        targetModel: "Recipe",
+        details: {
+            name: recipe.name,
+            message: `Admin deleted the recipe: ${recipe.name}`
+        }
+    });
+
     res.status(200).json({ message: "Recipe deleted successfully" });
 })
 
@@ -257,6 +285,19 @@ export const updateRecipeImage = asyncHandler(async (req: Request<{ id: string }
     await recipe.save();
 
     fs.unlinkSync(imagePath);
+
+
+
+    await Activity.create({
+        user: req.user?._id,
+        action: "UPDATED_RECIPE_IMAGE",
+        targetId: recipe._id,
+        targetModel: "Recipe",
+        details: {
+            imageUrl: image.secure_url,
+            message: `Admin updated the image for recipe: ${recipe.name}`
+        }
+    });
 
     res.status(200).json(recipe);
 })
@@ -308,6 +349,21 @@ export const updateRecipe = asyncHandler(async (req: Request<{ id: string }, {},
 
 
 
+
+
+
+
+    await Activity.create({
+        user: req.user?._id,
+        action: "UPDATED_RECIPE",
+        targetId: updatedRecipe?._id,
+        targetModel: "Recipe",
+        details: {
+            updates: req.body,
+            message: `Admin updated details for recipe: ${updatedRecipe?.name}`
+        }
+    });
+
     res.status(200).json(updatedRecipe);
 })
 
@@ -321,7 +377,7 @@ export const updateRecipe = asyncHandler(async (req: Request<{ id: string }, {},
  * @route   /api/recipes/favorite/:id
  * @method  PUT
  * @access  private (logged in users)
- */ 
+ */
 export const toggleFavoriteRecipe = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
     const { id: recipeId } = req.params;
     const userId = req.user?._id;
@@ -331,7 +387,7 @@ export const toggleFavoriteRecipe = asyncHandler(async (req: Request<{ id: strin
         res.status(404).json({ message: "User not found" });
         return;
     }
-    
+
     const recipe = await Recipe.findById(recipeId);
     if (!recipe) {
         res.status(404).json({ message: "Recipe not found" });
@@ -344,6 +400,6 @@ export const toggleFavoriteRecipe = asyncHandler(async (req: Request<{ id: strin
     } else {
         user = await User.findByIdAndUpdate(userId, { $push: { favoriteRecipes: recipeId } }, { new: true });
     }
-    
+
     res.status(200).json(user);
 })
