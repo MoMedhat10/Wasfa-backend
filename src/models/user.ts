@@ -10,6 +10,7 @@ interface IUser extends Document {
     isVerified: boolean,
     subscription: SubscriptionType,
     isAdmin: boolean,
+    isBanned: boolean,
     favoriteRecipes: [{ type: Schema.Types.ObjectId, ref: "Recipe" }]
 }
  
@@ -34,6 +35,7 @@ const userSchema = new Schema<IUser>({
         trim: true,
         minlength: 8
     },
+    isBanned: { type: Boolean, default: false },
     favoriteRecipes: [{ type: Schema.Types.ObjectId, ref: "Recipe" }],
     isVerified: { type: Boolean, default: false },
     subscription: { type: String, enum: ["FREE", "BASIC", "PRO"], default: "FREE" },

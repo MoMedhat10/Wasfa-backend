@@ -5,8 +5,11 @@ import express from "express";
 const router = express.Router();
 
 router.route("/:id")
-                  .get(protectedRoute, validateObjectIds ,getUserProfile)
-                  .delete(protectedRoute, validateObjectIds ,deleteUserProfile);
+    .get(protectedRoute, validateObjectIds, getUserProfile)
+    .delete(protectedRoute, validateObjectIds, deleteUserProfile);
 
-                  
+
+// router.route("/toggle-ban/:id").put(protectedRoute, validateObjectIds, toggleBanUser);
+
+
 export default router;

@@ -42,7 +42,7 @@ export const getUserProfile = asyncHandler(async (req: Request<{ id: string }>, 
  * @desc    delete user profile
  * @route   /api/profile/:id
  * @method  DELETE
- * @access  private (logged in users)
+ * @access  private (admins)
  */
 export const deleteUserProfile = asyncHandler(async (req: Request<{ id: string }>, res: Response) => {
     const { id: userId } = req.params;
@@ -73,3 +73,9 @@ export const deleteUserProfile = asyncHandler(async (req: Request<{ id: string }
 
     res.json({ message: 'User deleted', id: userId });
 })
+
+
+
+
+
+

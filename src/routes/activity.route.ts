@@ -1,12 +1,12 @@
 import express from "express";
 import { getRecentActivities } from "../controllers/activity.controller";
-import { adminRoute } from "@middlewares/protectedRoutes";
+// import { adminRoute } from "@middlewares/protectedRoutes";
 
 
 const router = express.Router();
 
-// /api/activities
+// adding admin route later
 router.route("/")
-    .get(adminRoute, getRecentActivities);
+    .get( getRecentActivities);
 
 export default router;
