@@ -13,9 +13,12 @@ import Activity from "../models/activity";
  */
 export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
     const { search, role, status } = req.query;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
 
     const query: any = {};
-
 
     if (search) {
         query.username = { $regex: search, $options: "i" };
@@ -37,8 +40,21 @@ export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
         query.isVerified = false;
     }
 
-    const users = await User.find(query).select("-password -favoriteRecipes -updatedAt -__v");
-    res.json(users);
+    
+    const users = await User.find(query)
+        .select("-password -favoriteRecipes -updatedAt -__v")
+        .skip(skip)
+        .limit(limit);
+
+    const total = await User.countDocuments(query);
+
+    res.json({
+        users,
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+    });
 })
 
 

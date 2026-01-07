@@ -9,7 +9,6 @@ router.route("/:id")
     .delete(protectedRoute, validateObjectIds, deleteUserProfile);
 
 
-// router.route("/toggle-ban/:id").put(protectedRoute, validateObjectIds, toggleBanUser);
 
 
 export default router;
