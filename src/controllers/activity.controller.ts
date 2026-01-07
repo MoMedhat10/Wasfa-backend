@@ -13,10 +13,10 @@ export const getRecentActivities = asyncHandler(async (req: Request, res: Respon
     const skip = (page - 1) * limit;
 
     const activities = await Activity.find()
-        .sort({ createdAt: -1 }) // Newest first
+        .sort({ createdAt: -1 }) 
         .skip(skip)
         .limit(limit)
-        .populate("user", "username email profilePhoto"); // Populate user details
+        .populate("user", "username email profilePhoto"); 
 
     const total = await Activity.countDocuments();
 

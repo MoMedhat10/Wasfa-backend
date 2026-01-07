@@ -15,6 +15,7 @@ import recipeRoute from "@routes/recipe.route"
 import commentRoute from "@routes/comment.route"
 import profileRoute from "@routes/profile.route"
 import activityRoute from "@routes/activity.route"
+import statsRoute from "@routes/stats.route"
 
 
 
@@ -39,6 +40,7 @@ app.use("/api/recipes", recipeRoute)
 app.use("/api/comments", commentRoute)
 app.use("/api/profile", profileRoute)
 app.use("/api/activities", activityRoute)
+app.use("/api/stats", statsRoute)
 
 
 app.use(notFound)
