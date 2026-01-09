@@ -147,7 +147,8 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res
 
     res.status(200).json({
         message: `Welcome back ${user.username}!`,
-        token: accessToken
+        token: accessToken,
+        isAdmin: user.isAdmin
     })
 
     await Activity.create({

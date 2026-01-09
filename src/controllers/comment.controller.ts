@@ -5,6 +5,7 @@ import { Types } from "mongoose";
 import Recipe from "models/recipe";
 import User from "models/user";
 import Activity from "../models/activity";
+import { sortByType, sortType } from "@utils/types";
 
 
 
@@ -14,6 +15,13 @@ interface CommentData {
     userId: Types.ObjectId;
     body: string;
     rating: number;
+}
+
+interface CommentFilter {
+    sortBy?: sortByType | "newest" | "oldest" | "high-rated" | "low-rated";
+    sort?: sortType;
+    page?: string;
+    limit?: string;
 }
 
 
@@ -82,8 +90,27 @@ export const createComment = asyncHandler(async (req: Request<{}, {}, CommentDat
  * @method  GET
  * @access  private (admin only)
  */
-export const getAllComments = asyncHandler(async (req: Request, res: Response) => {
+export const getAllComments = asyncHandler(async (req: Request<{}, {}, {}, CommentFilter>, res: Response) => {
+    let { sortBy = "createdAt", sort = "desc", page = "1", limit = "10" } = req.query;
+
+    const skip = (Number(page) - 1) * Number(limit);
+    const limitNum = Number(limit);
+    const sortQuery: any = {};
+
+    if (sortBy === "newest") {
+        sortQuery.createdAt = -1;
+    } else if (sortBy === "oldest") {
+        sortQuery.createdAt = 1;
+    } else if (sortBy === "high-rated") {
+        sortQuery.rating = -1;
+    } else if (sortBy === "low-rated") {
+        sortQuery.rating = 1;
+    } else {
+        sortQuery[sortBy as string] = sort === "asc" ? 1 : -1;
+    }
+
     const comments = await Comment.find()
+        .sort(sortQuery)
         .populate("userId", ["-password", "-isAdmin", "-isVerified", "-createdAt", "-updatedAt", "-__v"])
         .populate("recipeId", ["image", "premium", "_id", "name"]);
 
@@ -91,7 +118,7 @@ export const getAllComments = asyncHandler(async (req: Request, res: Response) =
 })
 
 
-//todo
+
 /**
  * @desc    delete comment
  * @route   /api/comments/:id
@@ -143,7 +170,7 @@ export const updateComment = asyncHandler(async (req: Request<{ id: string }, {}
     const { id: commentId } = req.params;
     const { body } = req.body;
     const user = await User.findById(req.user?._id);
-    
+
 
     const comment = await Comment.findById(commentId);
     if (!comment) {

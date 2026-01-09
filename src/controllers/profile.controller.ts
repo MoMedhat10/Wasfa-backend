@@ -52,7 +52,7 @@ export const deleteUserProfile = asyncHandler(async (req: Request<{ id: string }
         return
     }
 
-    if (user._id.toString() !== req.user?._id.toString()) {
+    if (!req.user || !req.user.isAdmin ) {
         res.status(401).json({ message: 'Unauthorized' })
         return
     }

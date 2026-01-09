@@ -94,8 +94,6 @@ export const createRecipe = asyncHandler(async (req: Request<{}, {}, RecipeData>
 
     fs.unlinkSync(imagePath);
 
-
-
     await Activity.create({
         user: req.user?._id,
         action: "CREATED_RECIPE",
@@ -133,7 +131,6 @@ export const getRecipes = asyncHandler(async (req: Request<{}, {}, {}, RecipeFil
     }
 
     const sanitizedIngredients = ingredientsArray.map(i => i.trim()).filter(i => i.length > 0);
-    console.log(sanitizedIngredients);
 
 
     const skip = (Number(page) - 1) * Number(limit);
@@ -235,9 +232,6 @@ export const deleteRecipe = asyncHandler(async (req: Request<{ id: string }>, re
     await Comment.deleteMany({ recipeId: id });
 
 
-
-
-
     await Activity.create({
         user: req.user?._id,
         action: "DELETED_RECIPE",
@@ -285,8 +279,6 @@ export const updateRecipeImage = asyncHandler(async (req: Request<{ id: string }
     await recipe.save();
 
     fs.unlinkSync(imagePath);
-
-
 
     await Activity.create({
         user: req.user?._id,
@@ -346,10 +338,6 @@ export const updateRecipe = asyncHandler(async (req: Request<{ id: string }, {},
         cookTime,
         servings
     }, { new: true });
-
-
-
-
 
 
 
