@@ -19,6 +19,8 @@ interface RecipeFilter {
     page?: number;
     limit?: number;
     ingredients?: string | string[];
+    search?: string;
+    type?: string;
 }
 
 
@@ -119,7 +121,7 @@ export const createRecipe = asyncHandler(async (req: Request<{}, {}, RecipeData>
  * @access  public 
  */
 export const getRecipes = asyncHandler(async (req: Request<{}, {}, {}, RecipeFilter>, res: Response) => {
-    let { sort = "asc", sortBy = "name", filter = "all", page = 1, limit = 6, ingredients } = req.query;
+    let { sort = "asc", sortBy = "name", filter = "all", page = 1, limit = 6, ingredients, search, type } = req.query;
 
     let ingredientsArray: string[] = [];
     if (ingredients) {
@@ -136,6 +138,14 @@ export const getRecipes = asyncHandler(async (req: Request<{}, {}, {}, RecipeFil
     const skip = (Number(page) - 1) * Number(limit);
     const query: any = {};
     const sortQuery: any = {};
+
+    if (search) {
+        query.name = { $regex: search, $options: "i" };
+    }
+
+    if (type === "premium") {
+        query.premium = true;
+    }
 
     if (filter === "quick") {
         query.cookTime = { $lte: 30 };
