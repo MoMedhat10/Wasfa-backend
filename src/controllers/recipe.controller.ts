@@ -27,12 +27,12 @@ interface RecipeFilter {
 interface RecipeData {
     name: string;
     description: string;
-    ingredients: string[];
-    instructions: string[];
+    ingredients: string[] | string;
+    instructions: string[] | string;
     level: string;
-    rating: number;
     cookTime: number;
-    servings: number
+    servings: number;
+    premium: boolean;
 }
 
 
@@ -48,11 +48,24 @@ const imgDir = path.join(__dirname, "../images");
  */
 export const createRecipe = asyncHandler(async (req: Request<{}, {}, RecipeData>, res: Response) => {
 
-    req.body.rating = +req.body.rating;
     req.body.cookTime = +req.body.cookTime;
     req.body.servings = +req.body.servings;
-    const { name, description, ingredients, instructions, level, rating, cookTime, servings } = req.body;
+    req.body.premium = Boolean(req.body.premium);
+    const { name, description, ingredients, instructions, level, cookTime, servings, premium } = req.body;
 
+    let ingredientsArray: string[] = [];
+    if (Array.isArray(ingredients)) {
+        ingredientsArray = ingredients as string[];
+    } else if (typeof ingredients === "string") {
+        ingredientsArray = ingredients.split(",");
+    }
+
+    let instructionsArray: string[] = [];
+    if (Array.isArray(instructions)) {
+        instructionsArray = instructions as string[];
+    } else if (typeof instructions === "string") {
+        instructionsArray = instructions.split(",");
+    }
 
 
     // image validation 
@@ -64,6 +77,8 @@ export const createRecipe = asyncHandler(async (req: Request<{}, {}, RecipeData>
     //validation
     const result = validateRecipe(req.body);
     if (!result.success) {
+        // delete image if validation fails
+        fs.unlinkSync(path.join(imgDir, req.file.filename));
         const formattedErrors = result.error.issues.map(issue => ({
             field: issue.path.join('.'),
             message: issue.message
@@ -77,37 +92,44 @@ export const createRecipe = asyncHandler(async (req: Request<{}, {}, RecipeData>
     }
 
     const imagePath = path.join(imgDir, req.file.filename);
-    const image = await cloudinaryUploadImage(imagePath);
 
-    const recipe = await Recipe.create({
-        name,
-        description,
-        ingredients,
-        instructions,
-        rating,
-        cookTime,
-        servings,
-        level,
-        image: {
-            url: image.secure_url,
-            public_id: image.public_id
-        }
-    })
+    try {
+        const image = await cloudinaryUploadImage(imagePath);
 
-    fs.unlinkSync(imagePath);
+        const recipe = await Recipe.create({
+            name,
+            description,
+            ingredients: ingredientsArray,
+            instructions: instructionsArray,
+            cookTime,
+            servings,
+            premium,
+            level: level,
+            image: {
+                url: image.secure_url,
+                public_id: image.public_id
+            }
+        })
 
-    await Activity.create({
-        user: req.user?._id,
-        action: "CREATED_RECIPE",
-        targetId: recipe._id,
-        targetModel: "Recipe",
-        details: {
-            name: recipe.name,
-            message: `Admin created a new recipe: ${recipe.name}`
-        }
-    });
+        fs.unlinkSync(imagePath);
 
-    res.status(201).json(recipe);
+        await Activity.create({
+            user: req.user?._id,
+            action: "CREATED_RECIPE",
+            targetId: recipe._id,
+            targetModel: "Recipe",
+            details: {
+                name: recipe.name,
+                message: `Admin created a new recipe: ${recipe.name}`
+            }
+        });
+
+        res.status(201).json(recipe);
+
+    } catch (error) {
+        fs.unlinkSync(imagePath);
+        throw error;
+    }
 })
 
 
@@ -139,8 +161,8 @@ export const getRecipes = asyncHandler(async (req: Request<{}, {}, {}, RecipeFil
     const query: any = {};
     const sortQuery: any = {};
 
-    if (search) {
-        query.name = { $regex: search, $options: "i" };
+    if (search && typeof search === "string" && search.trim() !== "" && search.trim().toLowerCase() !== "undefined" && search.trim().toLowerCase() !== "null") {
+        query.name = { $regex: search.trim(), $options: "i" };
     }
 
     if (type === "premium") {
@@ -157,10 +179,6 @@ export const getRecipes = asyncHandler(async (req: Request<{}, {}, {}, RecipeFil
 
     if (filter === "long") {
         query.cookTime = { $gt: 60 };
-    }
-
-    if (filter === "high-rated") {
-        query.rating = { $gte: 4 };
     }
 
     if (sanitizedIngredients.length > 0) {
@@ -315,7 +333,7 @@ export const updateRecipeImage = asyncHandler(async (req: Request<{ id: string }
  * @access  private (admin only)
  */
 export const updateRecipe = asyncHandler(async (req: Request<{ id: string }, {}, RecipeData>, res: Response) => {
-    const { name, description, ingredients, instructions, level, rating, cookTime, servings } = req.body;
+    const { name, description, ingredients, instructions, level, cookTime, servings } = req.body;
 
     const { id } = req.params;
     const recipe = await Recipe.findById(id);
@@ -344,7 +362,6 @@ export const updateRecipe = asyncHandler(async (req: Request<{ id: string }, {},
         ingredients,
         instructions,
         level,
-        rating,
         cookTime,
         servings
     }, { new: true });

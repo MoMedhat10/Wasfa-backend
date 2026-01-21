@@ -12,11 +12,10 @@ interface IRecipe extends Document {
     description: string;
     ingredients: string[];
     instructions: string[];
-    rating: number,
     cookTime: number,
     servings: number,
     level: LevelType,
-    premium: boolean,   
+    premium: boolean,
 }
 
 
@@ -43,7 +42,6 @@ const RecipeMongooseSchema = new Schema<IRecipe>(
         },
         ingredients: { type: [String], required: true },
         instructions: { type: [String], required: true },
-        rating: { type: Number, required: true },
         cookTime: { type: Number, required: true },
         servings: { type: Number, required: true },
         level: {
@@ -84,27 +82,23 @@ const RecipeZodSchema = z.object({
         .max(100, "Description cannot exceed 100 characters")
         .trim(),
 
-    ingredients: z.array(z.string())
-        .min(1, "Ingredients must contain at least one ingredient")
-        .max(5, "Ingredients cannot exceed 5 ingredients"),
+    ingredients: z.string()
+        .min(1, "Ingredients must contain at least one ingredient"),
 
-    instructions: z.array(z.string())
-        .min(1, "Instructions must contain at least one instruction")
-        .max(5, "Instructions cannot exceed 5 instructions"),
 
-    
-    rating: z.number()
-        .min(1, "Rating must be at least 1")
-        .max(5, "Rating cannot exceed 5"),
+    instructions: z.string()
+        .min(1, "Instructions must contain at least one instruction"),
+
+    premium: z.boolean()
+        .default(false),
 
     //!
     cookTime: z.number()
-        .min(1, "Cook time must be at least 1 minute")
-        .max(60, "Cook time cannot exceed 60 minutes"),
+        .min(1, "Cook time must be at least 1 minute"),
 
     servings: z.number()
         .min(1, "Servings must be at least 1")
-        .max(10, "Servings cannot exceed 10"),
+        .max(20, "Servings cannot exceed 20"),
 
     level: z.enum(["Easy", "Intermediate", "Hard"])
         .default("Easy"),
