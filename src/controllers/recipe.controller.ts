@@ -333,7 +333,12 @@ export const updateRecipeImage = asyncHandler(async (req: Request<{ id: string }
  * @access  private (admin only)
  */
 export const updateRecipe = asyncHandler(async (req: Request<{ id: string }, {}, RecipeData>, res: Response) => {
-    const { name, description, ingredients, instructions, level, cookTime, servings } = req.body;
+
+    if (req.body.cookTime) req.body.cookTime = +req.body.cookTime;
+    if (req.body.servings) req.body.servings = +req.body.servings;
+    if (req.body.premium !== undefined) req.body.premium = Boolean(req.body.premium);
+
+    const { name, description, ingredients, instructions, level, cookTime, servings, premium } = req.body;
 
     const { id } = req.params;
     const recipe = await Recipe.findById(id);
@@ -356,14 +361,33 @@ export const updateRecipe = asyncHandler(async (req: Request<{ id: string }, {},
         return;
     }
 
+    let ingredientsArray: string[] | undefined;
+    if (ingredients !== undefined) {
+        if (Array.isArray(ingredients)) {
+            ingredientsArray = ingredients as string[];
+        } else if (typeof ingredients === "string") {
+            ingredientsArray = ingredients.split(",");
+        }
+    }
+
+    let instructionsArray: string[] | undefined;
+    if (instructions !== undefined) {
+        if (Array.isArray(instructions)) {
+            instructionsArray = instructions as string[];
+        } else if (typeof instructions === "string") {
+            instructionsArray = instructions.split(",");
+        }
+    }
+
     const updatedRecipe = await Recipe.findByIdAndUpdate(id, {
         name,
         description,
-        ingredients,
-        instructions,
-        level,
+        ingredients: ingredientsArray,
+        instructions: instructionsArray,
+        level: level ? level as any : undefined,
         cookTime,
-        servings
+        servings,
+        premium
     }, { new: true });
 
 
