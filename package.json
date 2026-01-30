@@ -33,6 +33,7 @@
     "module-alias": "^2.2.3",
     "mongoose": "^9.0.0",
     "multer": "^2.0.2",
+    "stripe": "^20.3.0",
     "zod": "^4.1.13"
   },
   "devDependencies": {

@@ -17,6 +17,7 @@ import profileRoute from "@routes/profile.route"
 import activityRoute from "@routes/activity.route"
 import statsRoute from "@routes/stats.route"
 import usersRoute from "@routes/users.route"
+import paymentsRoute from "@routes/payments.route"
 
 
 
@@ -43,7 +44,9 @@ app.use("/api/profile", profileRoute)
 app.use("/api/activities", activityRoute)
 app.use("/api/stats", statsRoute)
 app.use("/api/users", usersRoute)
-
+// write the link to paste in the browsers
+// http://localhost:3000/api/payments/prices
+app.use("/api/payments", paymentsRoute)
 
 app.use(notFound)
 app.use(errorHandler)
