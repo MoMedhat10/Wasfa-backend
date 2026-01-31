@@ -1,16 +1,16 @@
+import { Types } from "mongoose";
 import { Document, Schema, model } from "mongoose";
 import { z } from "zod";
 
-type SubscriptionType = "FREE" | "BASIC" | "PRO"
 
 interface IUser extends Document {
     username: string;
     email: string;
     password: string;
     isVerified: boolean,
-    subscription: SubscriptionType,
     isAdmin: boolean,
     isBanned: boolean,
+    subscription: Types.ObjectId | null,
     stripeCustomerId: string | null,
     favoriteRecipes: [{ type: Schema.Types.ObjectId, ref: "Recipe" }]
 }
@@ -36,11 +36,17 @@ const userSchema = new Schema<IUser>({
         trim: true,
         minlength: 8
     },
+
+    subscription: {
+      type: Types.ObjectId,
+      ref: "Subscription",
+      default: null,
+    },
+
     stripeCustomerId: { type: String, default: null },
     isBanned: { type: Boolean, default: false },
     favoriteRecipes: [{ type: Schema.Types.ObjectId, ref: "Recipe" }],
     isVerified: { type: Boolean, default: false },
-    subscription: { type: String, enum: ["FREE", "BASIC", "PRO"], default: "FREE" },
     isAdmin: { type: Boolean, default: false }
 }, { timestamps: true, toJSON: { virtuals: true }, toObject: { virtuals: true } })
 
