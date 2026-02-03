@@ -44,7 +44,8 @@ export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
     const users = await User.find(query)
         .select("-password -favoriteRecipes -updatedAt -__v")
         .skip(skip)
-        .limit(limit);
+        .limit(limit)
+        .populate("subscription" , "user stripeSubscriptionId stripePriceId status currentPeriodStart currentPeriodEnd cancelAtPeriodEnd") 
 
     const total = await User.countDocuments(query);
 
