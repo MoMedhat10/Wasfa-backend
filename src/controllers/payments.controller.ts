@@ -68,6 +68,18 @@ export const createCheckoutSession = asyncHandler(async (req: Request<{}, {}, { 
 
 
 
+export const createPortalSession = asyncHandler(async (req: Request, res: Response) => {
+  const customerId = await getOrCreateStripeCustomer(req.user?._id.toString()!);
+
+  const session = await stripe.billingPortal.sessions.create({
+    customer: customerId,
+    return_url: `${process.env.CLIENT_DOMAIN}/`,
+  });
+
+  res.json({
+    url: session.url,
+  });
+});
 
 
 export const webhookHandler = async (

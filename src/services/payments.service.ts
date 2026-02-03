@@ -54,7 +54,7 @@ export const handleCheckoutCompleted = async (session: any) => {
     currentPeriodEnd: new Date(
       subscription.ended_at! * 1000
     ),
-    cancelAtPeriodEnd: 
+    cancelAtPeriodEnd:
       subscription.cancel_at_period_end,
   });
 
@@ -84,7 +84,6 @@ export const handleSubscriptionUpdated = async (
     }
   );
 };
-
 
 
 export const handleSubscriptionDeleted = async (

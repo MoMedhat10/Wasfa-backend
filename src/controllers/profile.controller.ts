@@ -18,6 +18,7 @@ export const getUserProfile = asyncHandler(async (req: Request<{ id: string }>, 
     const user = await User.findById(userId).select("-password -isAdmin -isVerified  -updatedAt -__v")
         .populate("comments")
         .populate("favoriteRecipes")
+        .populate("subscription" , "user stripeSubscriptionId stripePriceId status currentPeriodStart currentPeriodEnd cancelAtPeriodEnd")
 
 
     if (!user) {
