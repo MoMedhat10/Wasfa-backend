@@ -3,6 +3,7 @@ import asyncHandler from "express-async-handler";
 import User from "../models/user";
 import Recipe from "../models/recipe";
 import Comment from "../models/comment";
+import Subscription from "models/subscription";
 
 /**
  * @desc    Get dashboard stats (users, recipes, comments)
@@ -13,10 +14,14 @@ export const getDashboardStats = asyncHandler(async (req: Request, res: Response
     const usersCount = await User.countDocuments();
     const recipesCount = await Recipe.countDocuments();
     const commentsCount = await Comment.countDocuments();
+    const subscriptionsCount = await Subscription.countDocuments({
+        status: "active",
+    });
 
     res.status(200).json({
         usersCount,
         recipesCount,
-        commentsCount
+        commentsCount,
+        subscriptionsCount
     });
 });

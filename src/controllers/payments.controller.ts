@@ -5,7 +5,6 @@ import { getOrCreateStripeCustomer, handleCheckoutCompleted, handleSubscriptionD
 
 
 
-
 export const listStripePrices = async () => {
   return await stripe.prices.list({
     active: true,

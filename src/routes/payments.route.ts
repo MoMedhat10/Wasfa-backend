@@ -8,6 +8,7 @@ router.get("/prices", getPrices);
 
 router.get("/create-portal-session", protectedRoute, createPortalSession);
 
+
 router.post("/checkout-session", protectedRoute, createCheckoutSession);
 
 export default router;
