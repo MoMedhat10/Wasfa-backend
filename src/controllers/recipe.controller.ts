@@ -8,9 +8,11 @@ import Comment from "models/comment";
 import { sortByType, sortType, filterType } from "@utils/types";
 import User from "models/user"
 import Activity from "../models/activity";
+import { getUserPlan } from "@utils/getUserPlan";
 
 
-
+const MAX_BASIC_RECIPES = 10;
+const MAX_PRO_RECIPES = 20;
 
 interface RecipeFilter {
     sortBy?: sortByType;
@@ -441,6 +443,15 @@ export const toggleFavoriteRecipe = asyncHandler(async (req: Request<{ id: strin
     if (isFavorite) {
         user = await User.findByIdAndUpdate(userId, { $pull: { favoriteRecipes: recipeId } }, { new: true });
     } else {
+        const plan = await getUserPlan(userId!);
+        if (plan === "BASIC" && user.favoriteRecipes.length >= MAX_BASIC_RECIPES) {
+            res.status(403).json({ message: "Basic plan users can only favorite 10 recipes" });
+            return;
+        }
+        if (plan === "PRO" && user.favoriteRecipes.length >= MAX_PRO_RECIPES) {
+            res.status(403).json({ message: "Pro plan users can only favorite 20 recipes" });
+            return;
+        }
         user = await User.findByIdAndUpdate(userId, { $push: { favoriteRecipes: recipeId } }, { new: true });
     }
 
