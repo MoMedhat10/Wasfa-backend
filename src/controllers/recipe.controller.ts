@@ -169,6 +169,10 @@ export const getRecipes = asyncHandler(async (req: Request<{}, {}, {}, RecipeFil
         query.premium = true;
     }
 
+    if (type === "free") {
+        query.premium = false;
+    } 
+
     if (filter === "quick") {
         query.cookTime = { $lte: 30 };
     }
