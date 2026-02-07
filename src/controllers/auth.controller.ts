@@ -141,7 +141,7 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res
     res.cookie("refreshToken", refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
         maxAge: 7 * 24 * 60 * 60 * 1000
     })
 
@@ -183,14 +183,30 @@ export const refreshToken = asyncHandler(async (req: Request, res: Response) => 
 
     try {
         const decodedPayLoad = jwt.verify(refreshToken, process.env.TOKENS_SECRET_KEY!) as UserType;
-        const newAccessToken = generateAccessToken(decodedPayLoad);
+
+        
+        const user = await User.findById(decodedPayLoad._id);
+
+        if (!user) {
+            res.status(401).json({ message: "User not found" });
+            return;
+        }
+
+        // Generate new access token with fresh user data
+        const newAccessToken = generateAccessToken({
+            _id: user._id.toString(),
+            isAdmin: user.isAdmin,
+            isBanned: user.isBanned
+        });
+
         res.status(200).json({
             message: "Token refreshed successfully",
             token: newAccessToken
         })
     }
-    catch {
-        res.status(403).json({ message: "Invalid refresh token" })
+    catch (error) {
+        console.error("Refresh token verification failed:", error);
+        res.status(401).json({ message: "Invalid refresh token" })
     }
 })
 

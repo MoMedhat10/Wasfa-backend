@@ -21,6 +21,7 @@ export const protectedRoute = (req: Request , res: Response , next: NextFunction
         return next();
     }
     catch {
+        console.log("invalid token error MIDDLEWARE");
         res.status(401).json({message: "invalid token , access denied."});
         return 
     }
@@ -32,7 +33,7 @@ export const adminRoute = (req: Request , res: Response , next: NextFunction) =>
      protectedRoute(req , res , () => {
 
         if (!req.user || !req.user.isAdmin) {
-            return res.status(401).json({ message: " admins only, Access denied" });
+            return res.status(403).json({ message: " admins only, Access denied" });
         }
         return next();
      

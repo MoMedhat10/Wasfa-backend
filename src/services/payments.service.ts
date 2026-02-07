@@ -1,5 +1,4 @@
 import { stripe } from "lib/stripe";
-import Recipe from "models/recipe";
 import Subscription from "models/subscription";
 import User from "models/user";
 
