@@ -1,4 +1,5 @@
 import { stripe } from "lib/stripe";
+import Recipe from "models/recipe";
 import Subscription from "models/subscription";
 import User from "models/user";
 
@@ -86,15 +87,17 @@ export const handleSubscriptionUpdated = async (
 };
 
 
-export const handleSubscriptionDeleted = async (
-  subscription: any
-) => {
-  await Subscription.findOneAndUpdate(
+export const handleSubscriptionDeleted = async (subscription: any) => {
+ const sub =  await Subscription.findOneAndUpdate(
     {
       stripeSubscriptionId: subscription.id,
     },
     {
       status: "canceled",
     }
+
   );
+   
+  await User.findByIdAndUpdate(sub?.user, { favoriteRecipes: [] });
+  
 };
