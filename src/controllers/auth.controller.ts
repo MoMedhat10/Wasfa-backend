@@ -135,7 +135,7 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res
         return
     }
 
-    const accessToken = generateAccessToken({ _id: user._id.toString(), isAdmin: user.isAdmin });
+    const accessToken = generateAccessToken({ _id: user._id.toString(), isAdmin: user.isAdmin, isBanned: user.isBanned });
     const refreshToken = generateRefreshToken({ _id: user._id.toString(), isAdmin: user.isAdmin });
 
     res.cookie("refreshToken", refreshToken, {
@@ -148,7 +148,8 @@ export const loginUser = asyncHandler(async (req: Request<{}, {}, UserBody>, res
     res.status(200).json({
         message: `Welcome back ${user.username}!`,
         token: accessToken,
-        isAdmin: user.isAdmin
+        isAdmin: user.isAdmin,
+        isBanned: user.isBanned
     })
 
     await Activity.create({
