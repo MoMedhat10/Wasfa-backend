@@ -6,6 +6,7 @@ import { errorHandler, notFound } from "./middlewares/error";
 import cookieParser from "cookie-parser"
 import cors from "cors"
 import { logger } from "@middlewares/logger"
+import { xss } from "express-xss-sanitizer"
 
 
 // routes
@@ -24,6 +25,10 @@ import { webhookHandler } from "@controllers/payments.controller";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const options = {
+    allowedTags: []
+}
+
 
 connectDB();
 
@@ -38,6 +43,8 @@ app.post("/api/webhooks/stripe", express.raw({ type: "application/json" }), webh
 
 app.use(express.json());
 app.use(cookieParser());
+
+app.use(xss(options));
 
 app.use(logger);
 app.use("/api/auth", authRoute)
