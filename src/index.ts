@@ -7,6 +7,7 @@ import cookieParser from "cookie-parser"
 import cors from "cors"
 import { logger } from "@middlewares/logger"
 import { xss } from "express-xss-sanitizer"
+import rateLimit from "express-rate-limit"
 
 
 // routes
@@ -45,6 +46,11 @@ app.use(express.json());
 app.use(cookieParser()); 
 
 app.use(xss(options));
+
+app.use(rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 300
+}))
 
 app.use(logger);
 app.use("/api/auth", authRoute)
