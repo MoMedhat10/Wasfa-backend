@@ -93,8 +93,10 @@ export const createComment = asyncHandler(async (req: Request<{}, {}, CommentDat
 export const getAllComments = asyncHandler(async (req: Request<{}, {}, {}, CommentFilter>, res: Response) => {
     let { sortBy = "createdAt", sort = "desc", page = "1", limit = "10" } = req.query;
 
-    // const skip = (Number(page) - 1) * Number(limit);
-    // const limitNum = Number(limit);
+    const skip = (Number(page) - 1) * Number(limit);
+    const limitNum = Number(limit);
+    console.log(skip, limitNum);
+    
     const sortQuery: any = {};
 
     if (sortBy === "newest") {
