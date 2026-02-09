@@ -42,7 +42,7 @@ app.post("/api/webhooks/stripe", express.raw({ type: "application/json" }), webh
 
 
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser()); 
 
 app.use(xss(options));
 
