@@ -8,6 +8,8 @@ import cors from "cors"
 import { logger } from "@middlewares/logger"
 import { xss } from "express-xss-sanitizer"
 import rateLimit from "express-rate-limit"
+import hpp from "hpp"
+import helmet from "helmet"
 
 
 // routes
@@ -45,12 +47,18 @@ app.post("/api/webhooks/stripe", express.raw({ type: "application/json" }), webh
 app.use(express.json());
 app.use(cookieParser()); 
 
+
+app.use(helmet());
+app.use(hpp());
+ 
+
 app.use(xss(options));
 
 app.use(rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 300
 }))
+
 
 app.use(logger);
 app.use("/api/auth", authRoute)
